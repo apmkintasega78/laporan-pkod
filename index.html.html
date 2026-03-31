@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laporan Kes PKOD Kinta</title>
+
+<style>
+body { font-family: Arial; background:#eef3f9; padding:10px; }
+.container { max-width:500px; margin:auto; background:white; padding:15px; border-radius:12px; }
+input,select,textarea { width:100%; padding:10px; margin-top:5px; }
+button { width:100%; padding:10px; margin-top:10px; }
+#output { white-space:pre-line; background:#f4f6fb; padding:10px; margin-top:15px; }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h3>Laporan Kes PKOD Kinta</h3>
+
+<input id="tarikh" readonly>
+
+<select id="shift">
+<option value="">Shift</option>
+<option>ALFA</option>
+<option>BRAVO</option>
+<option>CHARLIE</option>
+</select>
+
+<input id="nok" placeholder="No Kes">
+<select id="kes">
+<option>KMU</option><option>KJR</option><option>MHL</option>
+<option>MHP</option><option>SKT</option><option>MSS</option>
+<option>LLK</option><option>PT</option>
+</select>
+
+<input id="no" placeholder="No CC">
+<input id="lokasi" placeholder="Lokasi">
+
+<select id="kenderaan">
+<option>CA009</option><option>CA010</option><option>CA011</option>
+<option>CA211</option><option>CA216</option><option selected>CA218</option>
+</select>
+
+<input type="number" id="mula" placeholder="Odometer Mula" oninput="kiraKM()">
+<input type="number" id="tamat" placeholder="Odometer Tamat" oninput="kiraKM()">
+<input id="km" placeholder="Jumlah KM" readonly>
+
+<textarea id="catatan" placeholder="Catatan"></textarea>
+
+<h4>Petugas</h4>
+<input id="p1" placeholder="Petugas 1">
+<input id="p2" placeholder="Petugas 2">
+<input id="p3" placeholder="Petugas 3">
+<input id="p4" placeholder="Petugas 4">
+<input id="p5" placeholder="Petugas 5">
+
+<h4>Masa</h4>
+<button onclick="setTime('terima')">Terima</button>
+<input id="terima" readonly>
+
+<button onclick="setTime('keluar')">Keluar</button>
+<input id="keluar" readonly>
+
+<button onclick="setTime('sampai')">Sampai</button>
+<input id="sampai" readonly>
+
+<button onclick="setTime('selesai')">Selesai</button>
+<input id="selesai" readonly>
+
+<button onclick="setTime('pkod')">PKOD</button>
+<input id="pkod" readonly>
+
+<button onclick="generate()">Generate</button>
+<button onclick="copy()">Copy</button>
+<button onclick="whatsapp()">WhatsApp</button>
+<button onclick="hantarSheet()">Hantar ke Google Sheet</button>
+
+<div id="output"></div>
+
+</div>
+
+<script>
+
+// AUTO TARIKH
+let now = new Date();
+document.getElementById("tarikh").value =
+now.toLocaleDateString('en-GB') + " " + now.toTimeString().slice(0,5);
+
+// FUNCTION
+function val(id){ return document.getElementById(id).value; }
+
+function setTime(id){
+document.getElementById(id).value = new Date().toTimeString().slice(0,5);
+}
+
+function kiraKM(){
+let m = parseInt(val('mula'));
+let t = parseInt(val('tamat'));
+
+if(isNaN(m)||isNaN(t)){ document.getElementById('km').value=""; return; }
+
+let km = t - m;
+document.getElementById('km').value = km>=0 ? km+" KM" : "Error";
+}
+
+// GENERATE REPORT
+function generate(){
+
+let m = val('mula')||0;
+let t = val('tamat')||0;
+let km = t-m;
+
+let text = `*LAPORAN KES PKOD KINTA*
+
+Tarikh: ${val('tarikh')}
+Shift: ${val('shift')}
+Jenis Kes: ${val('kes')}
+No Kes: ${val('nok')}
+No CC: ${val('no')}
+Lokasi: ${val('lokasi')}
+Kenderaan: ${val('kenderaan')}
+
+Odometer Mula: ${m}
+Odometer Tamat: ${t}
+Jumlah KM: ${km} KM
+
+Catatan: ${val('catatan')}
+
+*NAMA PETUGAS*
+1. ${val('p1')}
+2. ${val('p2')}
+3. ${val('p3')}
+4. ${val('p4')}
+5. ${val('p5')}
+
+*TIMELINE*
+Terima: ${val('terima')}
+Keluar: ${val('keluar')}
+Sampai: ${val('sampai')}
+Selesai: ${val('selesai')}
+PKOD: ${val('pkod')}`;
+
+document.getElementById("output").innerText = text;
+}
+
+// COPY
+function copy(){
+navigator.clipboard.writeText(document.getElementById("output").innerText);
+alert("Copied!");
+}
+
+// WHATSAPP
+function whatsapp(){
+let text = encodeURIComponent(document.getElementById("output").innerText);
+window.open("https://wa.me/?text="+text);
+}
+
+// GOOGLE SHEET (GUNA LINK WEB APP TUAN)
+function hantarSheet(){
+
+let data = {
+tarikh: val('tarikh'),
+shift: val('shift'),
+kes: val('kes'),
+nok: val('nok'),
+no: val('no'),
+lokasi: val('lokasi'),
+kenderaan: val('kenderaan'),
+mula: val('mula'),
+tamat: val('tamat'),
+km: val('km'),
+catatan: val('catatan'),
+p1: val('p1'),
+p2: val('p2'),
+p3: val('p3'),
+p4: val('p4'),
+p5: val('p5'),
+terima: val('terima'),
+keluar: val('keluar'),
+sampai: val('sampai'),
+selesai: val('selesai'),
+pkod: val('pkod')
+};
+
+fetch("MASUKKAN_WEB_APP_URL_KAU", {
+method:"POST",
+body:JSON.stringify(data)
+})
+.then(res=>res.json())
+.then(res=>{
+alert("✅ Data masuk Google Sheet");
+})
+.catch(err=>{
+alert("❌ Error connection");
+});
+
+}
+
+</script>
+
+</body>
+</html>
